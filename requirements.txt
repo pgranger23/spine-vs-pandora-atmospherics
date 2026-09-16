@@ -1,0 +1,13 @@
+# Python dependencies for the SPINE vs Pandora analysis.
+# Tested with Python 3.13.3. Install with:  pip install -r requirements.txt
+#
+# NOTE: ROOT / PyROOT is NOT a pip package. It must come from your ROOT
+# installation (e.g. `dunesw`/`cvmfs` at FNAL, or a conda `root` package),
+# and the same ROOT must be the one duneanaobj is built against. See README.md.
+
+numpy==2.2.6
+scipy==1.15.3
+matplotlib==3.10.3
+polars==1.35.2
+scikit-learn==1.7.0
+tqdm==4.67.1

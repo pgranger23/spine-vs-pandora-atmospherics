@@ -1,0 +1,26 @@
+# Large data files (see README.md for how to obtain the CAF)
+*.root
+*.csv
+
+# duneanaobj checkout + build (external dependency, see README.md)
+duneanaobj/
+
+# Generated outputs are re-runnable; committed reference copies live in figures/
+# (new outputs overwrite them in place — only commit intentional updates)
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Compiled artefacts
+*.so
+*.dylib
+*.o
+a.out
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# macOS metadata
+.DS_Store
