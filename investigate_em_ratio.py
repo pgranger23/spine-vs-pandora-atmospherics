@@ -20,17 +20,10 @@ import matplotlib.pyplot as plt
 from scipy.stats import binned_statistic
 from tqdm import tqdm
 
-base_dir = os.getcwd()
-lib_path = os.path.join(base_dir, "duneanaobj/build/Linux/lib")
-py_path  = os.path.join(base_dir, "duneanaobj/build/Linux/python/3.13")
-if py_path not in sys.path: sys.path.insert(0, py_path)
-for _lib in ["libSRProxy_BasicTypes.dylib", "libduneanaobj_StandardRecord.dylib",
-             "libduneanaobj_StandardRecordProxy.dylib"]:
-    try: ctypes.CDLL(os.path.join(lib_path, _lib))
-    except OSError: pass
-import pySRProxy
+import caf_env
+pySRProxy = caf_env.setup_pysrproxy()
 
-prox = pySRProxy.StandardRecordFileReader("recTree", "spine_merged_reprocess.root")
+prox = pySRProxy.StandardRecordFileReader("recTree", caf_env.CAF_FILE)
 
 _MASS = {11: 0.000511, 13: 0.10566, 22: 0.0, 211: 0.13957, 321: 0.49368,
          2212: 0.93827, 2112: 0.93957, 111: 0.13498, 310: 0.49761, 311: 0.49761}

@@ -42,19 +42,8 @@ from scipy.stats import binned_statistic as _bstat
 from tqdm import tqdm
 
 # ── PyROOT setup ──────────────────────────────────────────────────────────────
-base_dir = os.getcwd()
-try:
-    _root_libdir = subprocess.check_output(["root-config", "--libdir"]).decode().strip()
-    if _root_libdir not in sys.path:
-        sys.path.insert(0, _root_libdir)
-except Exception:
-    pass
-import ROOT
-
-_lib_path = os.path.join(base_dir, "duneanaobj/build/Linux/lib")
-for _lib in ["libSRProxy_BasicTypes", "libduneanaobj_StandardRecord",
-             "libduneanaobj_StandardRecordProxy"]:
-    ROOT.gSystem.Load(os.path.join(_lib_path, _lib))
+import caf_env
+ROOT = caf_env.setup_root()
 
 import plot_style
 plot_style.apply()
@@ -177,7 +166,7 @@ print("Particle multiplicity: reconstructible vs reco (SPINE & Pandora)")
 print(f"Near-vertex secondary cut: SEC_DISP_MAX = {SEC_DISP_MAX} cm")
 print("=" * 60)
 
-f = ROOT.TFile.Open("spine_merged_reprocess.root")
+f = ROOT.TFile.Open(caf_env.CAF_FILE)
 t = f.Get("recTree")
 N = t.GetEntries()
 rows = []

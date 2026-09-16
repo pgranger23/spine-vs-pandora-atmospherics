@@ -16,20 +16,8 @@ import matplotlib.ticker as mticker
 from sklearn.metrics import roc_curve, auc, confusion_matrix
 from tqdm import tqdm
 
-base_dir = os.getcwd()
-lib_path = os.path.join(base_dir, "duneanaobj/build/Linux/lib")
-py_path  = os.path.join(base_dir, "duneanaobj/build/Linux/python/3.13")
-if py_path not in sys.path:
-    sys.path.insert(0, py_path)
-
-for _lib in ["libSRProxy_BasicTypes.dylib", "libduneanaobj_StandardRecord.dylib",
-             "libduneanaobj_StandardRecordProxy.dylib"]:
-    try:
-        ctypes.CDLL(os.path.join(lib_path, _lib))
-    except OSError:
-        pass
-
-import pySRProxy
+import caf_env
+pySRProxy = caf_env.setup_pysrproxy()
 
 import plot_style
 plot_style.apply()
@@ -63,7 +51,7 @@ print("Study A: CVN Flavor Classifier Performance")
 print("=" * 60)
 print("Scanning CAF...")
 
-prox = pySRProxy.StandardRecordFileReader("recTree", "spine_merged_reprocess.root")
+prox = pySRProxy.StandardRecordFileReader("recTree", caf_env.CAF_FILE)
 
 records = []
 _nan = float("nan")

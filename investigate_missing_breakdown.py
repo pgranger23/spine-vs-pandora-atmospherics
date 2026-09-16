@@ -22,17 +22,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-base_dir = os.getcwd()
-try:
-    _libdir = subprocess.check_output(["root-config", "--libdir"]).decode().strip()
-    if _libdir not in sys.path:
-        sys.path.insert(0, _libdir)
-except Exception:
-    pass
-import ROOT
-for _lib in ["libSRProxy_BasicTypes", "libduneanaobj_StandardRecord",
-             "libduneanaobj_StandardRecordProxy"]:
-    ROOT.gSystem.Load(os.path.join(base_dir, "duneanaobj/build/Linux/lib", _lib))
+import caf_env
+ROOT = caf_env.setup_root()
 
 import plot_style
 plot_style.apply()
@@ -80,7 +71,7 @@ def best_match(sp):
     tid = sp.truth[bk]
     return (int(tid.ixn), int(tid.part), int(tid.type))
 
-f = ROOT.TFile.Open("spine_merged_reprocess.root")
+f = ROOT.TFile.Open(caf_env.CAF_FILE)
 t = f.Get("recTree")
 rows = []
 miss_spectrum = {s: [] for s in SPECIES}   # (E, pmag) of missed particles

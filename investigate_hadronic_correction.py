@@ -19,25 +19,8 @@ from scipy.optimize import curve_fit
 from scipy.stats import binned_statistic
 from tqdm import tqdm
 
-base_dir = os.getcwd()
-lib_path = os.path.join(base_dir, "duneanaobj/build/Linux/lib")
-py_path  = os.path.join(base_dir, "duneanaobj/build/Linux/python/3.13")
-if py_path not in sys.path:
-    sys.path.insert(0, py_path)
-
-_dylibs_to_preload = [
-    "libSRProxy_BasicTypes.dylib",
-    "libduneanaobj_StandardRecord.dylib",
-    "libduneanaobj_StandardRecordProxy.dylib",
-]
-for _lib in _dylibs_to_preload:
-    _full = os.path.join(lib_path, _lib)
-    try:
-        ctypes.CDLL(_full)
-    except OSError as e:
-        print(f"  WARNING: could not load {_lib}: {e}")
-
-import pySRProxy
+import caf_env
+pySRProxy = caf_env.setup_pysrproxy()
 
 outdir = "figures"
 os.makedirs(outdir, exist_ok=True)
@@ -93,7 +76,7 @@ print("=" * 60)
 print("Loading CAF data for hadronic correction study")
 print("=" * 60)
 
-prox = pySRProxy.StandardRecordFileReader('recTree', 'spine_merged_reprocess.root')
+prox = pySRProxy.StandardRecordFileReader('recTree', caf_env.CAF_FILE)
 
 records = []
 

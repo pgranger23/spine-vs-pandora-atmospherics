@@ -25,6 +25,7 @@ direction reconstruction, and a set of focused physics studies (Studies A–R).
 ├── REPORT.md                       # full analysis report (all figures + findings)
 ├── srproxy_guide.md                # CAF data model + SRProxy API reference
 ├── requirements.txt                # Python (pip) dependencies
+├── caf_env.py                      # shared env setup: resolves the CAF path + duneanaobj build
 ├── plot_style.py                   # shared matplotlib styling (imported by every script)
 ├── analysis_spine_vs_pandora.py    # MAIN: interaction-level comparison → most figures
 ├── analysis_per_particle.py        # MAIN: per-particle comparison → per-particle figures
@@ -80,26 +81,20 @@ make -j$(nproc)
 cd ../..
 ```
 
-This must sit at `./duneanaobj/` inside this repository (it is git-ignored). SRProxy is
-fetched automatically at configure time via CPM. See `srproxy_guide.md` for details on
-the C++ side.
+SRProxy is fetched automatically at configure time via CPM. See `srproxy_guide.md` for
+details on the C++ side.
 
-> **⚠️ Platform path — read this if you are on Linux (e.g. FNAL).**
-> The scripts locate the build under a hard-coded platform folder and preload macOS
-> library names:
-> ```python
-> lib_path = os.path.join(base_dir, "duneanaobj/build/Linux/lib")
-> py_path  = os.path.join(base_dir, "duneanaobj/build/Linux/python/3.13")
-> _dylibs_to_preload = ["libSRProxy_BasicTypes.dylib",
->                       "libduneanaobj_StandardRecord.dylib",
->                       "libduneanaobj_StandardRecordProxy.dylib"]
-> ```
-> Adjust `lib_path` / `py_path` to match your actual build output directory (the folder
-> name is set by CMake for your system), and if your Python is not 3.13 update the
-> `python/3.X` segment. On Linux the libraries are `.so`, not `.dylib`; the preload is
-> wrapped in try/except and only prints a warning if it fails, so if `import pySRProxy`
-> still succeeds (RPATH resolves the libs) you can ignore the warnings — otherwise change
-> the `.dylib` names to `.so`. This block is identical at the top of every script.
+All scripts locate this build through **`caf_env.py`**, which auto-detects the platform
+build folder (`build/Linux` or `build/Darwin`) and the correct library extension
+(`.so` on Linux, `.dylib` on macOS). If your build lives somewhere else — a different
+path, or your Python is not 3.13 — point `caf_env` at it with one environment variable:
+
+```bash
+export DUNEANAOBJ_BUILD=/path/to/duneanaobj/build/Linux   # contains lib/ and python/<X.Y>/
+```
+
+The default (with no variable set) is `./duneanaobj/build/<System>/`, so if you cloned and
+built at `./duneanaobj/` as above, it just works.
 
 ### 4. Get the input CAF
 
@@ -109,26 +104,27 @@ The single input file for every script is a merged SPINE-reprocessed CAF. At FNA
 /exp/dune/data/users/pgranger/spine_merged_output/spine_merged_output_all.root
 ```
 
-Every script opens it under the hard-coded name **`spine_merged_reprocess.root`** in the
-repository root. The simplest thing is to symlink it so you never edit the scripts:
+Tell `caf_env` where it is with one environment variable:
 
 ```bash
-ln -s /exp/dune/data/users/pgranger/spine_merged_output/spine_merged_output_all.root \
-      spine_merged_reprocess.root
+export SPINE_CAF=/exp/dune/data/users/pgranger/spine_merged_output/spine_merged_output_all.root
 ```
 
-(Or copy it locally under that name. If you keep a different name, update the
-`StandardRecordFileReader(...)` / `ROOT.TFile.Open(...)` calls — the filename is
-hard-coded in each script.)
+(If `SPINE_CAF` is unset, the scripts look for `spine_merged_reprocess.root` in the
+repository root — so a symlink of that name is a fine alternative to the variable.)
 
 ---
 
 ## Running
 
-All scripts are run from the repository root (they use `os.getcwd()` to find the
-`duneanaobj` build and the CAF) and take no command-line arguments:
+All scripts are run from the repository root and take no command-line arguments. Set the
+two environment variables once (see Setup steps 3–4) and every script picks them up via
+`caf_env`:
 
 ```bash
+export SPINE_CAF=/exp/dune/data/users/pgranger/spine_merged_output/spine_merged_output_all.root
+export DUNEANAOBJ_BUILD=$PWD/duneanaobj/build/Linux   # omit if you built at the default location
+
 # the two main analyses first — they produce the bulk of the figures
 python3 analysis_spine_vs_pandora.py
 python3 analysis_per_particle.py
@@ -145,13 +141,14 @@ Each script prints progress (a `tqdm` bar over CAF entries) and writes its outpu
 
 ## Known gotchas
 
-- **Hard-coded input filename** (`spine_merged_reprocess.root`) and **platform build
-  path** (`duneanaobj/build/Linux/...`) are repeated verbatim at the top of every script.
-  Fix them once per environment (symlink for the data; edit `lib_path`/`py_path` for the
-  build) — see Setup steps 3 and 4.
-- **Two reader backends.** Some scripts read via `pySRProxy`, others via `ROOT.TFile`
-  directly (both need the `duneanaobj` dictionary from step 3). The table below marks
-  which is which.
+- **Configuration is centralised in `caf_env.py`.** The input CAF path and the
+  `duneanaobj` build location come from the `SPINE_CAF` and `DUNEANAOBJ_BUILD` environment
+  variables (with sensible auto-detected defaults). You should never need to edit a path
+  inside an analysis script — set those two variables once. Run scripts from the
+  repository root so the defaults resolve.
+- **Two reader backends.** Some scripts read via `pySRProxy` (`caf_env.setup_pysrproxy()`),
+  others via `ROOT.TFile` (`caf_env.setup_root()`); both need the `duneanaobj` dictionary
+  from step 3. The table below marks which is which.
 - **`nu.mode` is not readable from Python** in this CAF (unregistered enum); studies that
   need interaction mode approximate it — see the relevant sections in `REPORT.md`.
 - Several SPINE quantities need corrections applied in-script (e.g. `p.E` is kinetic

@@ -24,17 +24,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import binned_statistic as _bstat
 from tqdm import tqdm
 
-base_dir = os.getcwd()
-try:
-    _libdir = subprocess.check_output(["root-config", "--libdir"]).decode().strip()
-    if _libdir not in sys.path:
-        sys.path.insert(0, _libdir)
-except Exception:
-    pass
-import ROOT
-for _lib in ["libSRProxy_BasicTypes", "libduneanaobj_StandardRecord",
-             "libduneanaobj_StandardRecordProxy"]:
-    ROOT.gSystem.Load(os.path.join(base_dir, "duneanaobj/build/Linux/lib", _lib))
+import caf_env
+ROOT = caf_env.setup_root()
 
 import plot_style
 plot_style.apply()
@@ -81,7 +72,7 @@ def closest(coll, n, vtx):
             best, bi = d, i
     return bi
 
-f = ROOT.TFile.Open("spine_merged_reprocess.root")
+f = ROOT.TFile.Open(caf_env.CAF_FILE)
 t = f.Get("recTree")
 
 # eff_ke[species][mode] -> list of (KE, correct)
